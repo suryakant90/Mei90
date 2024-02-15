@@ -1,25 +1,65 @@
 import streamlit as st
+import yfinance as yf
 
-# Streamlit app title
-st.title('Financial Chat Pattern Analysis')
+# Set up the Streamlit app
+st.title('Stock Technical Analysis')
 
-# Sidebar widgets
-st.sidebar.header('User Input')
-user_input = st.sidebar.text_area('Enter chat message', '')
+# Input field for stock symbol
+stock_symbol = st.text_input('Enter Stock Symbol (e.g., AAPL):')
 
-# Display user input
-st.write('**User Input:**', user_input)
+# Fetch real-time data from Yahoo Finance
+@st.cache
+def get_stock_data(symbol):
+    return yf.download(symbol, start="2023-01-01", end="2024-01-01")
 
-# Perform NLP analysis (example: sentiment analysis)
-if user_input:
-    # Perform sentiment analysis using an NLP model
-    sentiment_score = analyze_sentiment(user_input)
+if stock_symbol:
+    stock_data = get_stock_data(stock_symbol)
 
-    # Display sentiment analysis results
-    st.write('**Sentiment Score:**', sentiment_score)
+    # Display the TradingView chart using the HTML component
+    chart_html = """
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+      <div id="tradingview_123456"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+      <script type="text/javascript">
+      new TradingView.widget(
+      {
+      "autosize": true,
+      "symbol": "NASDAQ:AAPL",
+      "interval": "D",
+      "timezone": "Etc/UTC",
+      "theme": "light",
+      "style": "1",
+      "locale": "en",
+      "toolbar_bg": "#f1f3f6",
+      "enable_publishing": false,
+      "withdateranges": true,
+      "hide_side_toolbar": false,
+      "allow_symbol_change": true,
+      "details": true,
+      "hotlist": true,
+      "calendar": true,
+      "studies": [
+        "BB@tv-basicstudies",
+        "MACD@tv-basicstudies"
+      ],
+      "show_popup_button": true,
+      "popup_width": "1000",
+      "popup_height": "650",
+      "container_id": "tradingview_123456"
+    }
+      );
+      </script>
+    </div>
+    <!-- TradingView Widget END -->
+    """
+    st.components.v1.html(chart_html, width=1000, height=650)
 
-    # Perform financial analysis based on user input (example: stock market prediction)
-    stock_prediction = predict_stock_market(user_input)
+    # Calculate 200-day low and high
+    low_200 = stock_data['Low'].rolling(window=200).min().dropna()
+    high_200 = stock_data['High'].rolling(window=200).max().dropna()
 
-    # Display financial analysis results
-    st.write('**Stock Market Prediction:**', stock_prediction)
+    # Display the 200-day low and high
+    st.subheader('200-Day Low and High')
+    st.write(f"Low: {low_200.iloc[-1]}")
+    st.write(f"High: {high_200.iloc[-1]}")
