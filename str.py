@@ -1,65 +1,33 @@
 import streamlit as st
-import yfinance as yf
+import pandas as pd
+import numpy as np
+from datetime import datetime
 
-# Set up the Streamlit app
-st.title('Stock Technical Analysis')
+# Define functions for fetching and displaying data
+def fetch_data(symbol, start_date, end_date):
+    # Fetch derivative data using your preferred data source/API
+    # Example:
+    # derivative_data = get_derivative_data(symbol, start_date, end_date)
+    pass
 
-# Input field for stock symbol
-stock_symbol = st.text_input('Enter Stock Symbol (e.g., AAPL):')
+def execute_trades():
+    # Execute trades based on your algorithm's logic
+    pass
 
-# Fetch real-time data from Yahoo Finance
-@st.cache
-def get_stock_data(symbol):
-    return yf.download(symbol, start="2023-01-01", end="2024-01-01")
+# Main Streamlit app
+st.title('NSE Derivative Segment Algo-Trading')
 
-if stock_symbol:
-    stock_data = get_stock_data(stock_symbol)
+# User inputs
+symbol = st.text_input('Enter Symbol (e.g., NIFTY)', 'NIFTY')
+start_date = st.date_input('Start Date', datetime(2023, 1, 1))
+end_date = st.date_input('End Date', datetime.now())
 
-    # Display the TradingView chart using the HTML component
-    chart_html = """
-    <!-- TradingView Widget BEGIN -->
-    <div class="tradingview-widget-container">
-      <div id="tradingview_123456"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-      <script type="text/javascript">
-      new TradingView.widget(
-      {
-      "autosize": true,
-      "symbol": "NASDAQ:AAPL",
-      "interval": "D",
-      "timezone": "Etc/UTC",
-      "theme": "light",
-      "style": "1",
-      "locale": "en",
-      "toolbar_bg": "#f1f3f6",
-      "enable_publishing": false,
-      "withdateranges": true,
-      "hide_side_toolbar": false,
-      "allow_symbol_change": true,
-      "details": true,
-      "hotlist": true,
-      "calendar": true,
-      "studies": [
-        "BB@tv-basicstudies",
-        "MACD@tv-basicstudies"
-      ],
-      "show_popup_button": true,
-      "popup_width": "1000",
-      "popup_height": "650",
-      "container_id": "tradingview_123456"
-    }
-      );
-      </script>
-    </div>
-    <!-- TradingView Widget END -->
-    """
-    st.components.v1.html(chart_html, width=1000, height=650)
+# Fetch data
+if st.button('Fetch Data'):
+    data = fetch_data(symbol, start_date, end_date)
+    st.write(data)
 
-    # Calculate 200-day low and high
-    low_200 = stock_data['Low'].rolling(window=200).min().dropna()
-    high_200 = stock_data['High'].rolling(window=200).max().dropna()
-
-    # Display the 200-day low and high
-    st.subheader('200-Day Low and High')
-    st.write(f"Low: {low_200.iloc[-1]}")
-    st.write(f"High: {high_200.iloc[-1]}")
+# Execute trades
+if st.button('Execute Trades'):
+    execute_trades()
+    st.write('Trades executed successfully.')
