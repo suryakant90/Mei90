@@ -1,3 +1,5 @@
 yfinance
 zapline
-
+pandas 
+numpy
+datetime
