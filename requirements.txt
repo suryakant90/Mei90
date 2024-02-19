@@ -4,3 +4,7 @@ pandas
 numpy
 datetime
 talib
+datetime 
+sklearn.ensemble 
+sklearn.model_selection 
+sklearn.metrics 
