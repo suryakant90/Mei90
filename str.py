@@ -1,49 +1,42 @@
-import yfinance as yf
 import pandas as pd
+import numpy as np
+import talib
 
-# Function to fetch live stock data
-def fetch_live_data(symbol):
-    data = yf.download(symbol, period="1d", interval="1m")
-    return data
+# Load historical data (you can fetch this data from various sources like Yahoo Finance or NSE/BSE APIs)
+# For simplicity, let's assume you have a CSV file containing OHLCV (Open, High, Low, Close, Volume) data
+data = pd.read_csv('historical_data.csv')
 
-# Function to calculate moving averages
-def calculate_moving_averages(data, short_window, long_window):
-    data['Short_MA'] = data['Close'].rolling(window=short_window).mean()
-    data['Long_MA'] = data['Close'].rolling(window=long_window).mean()
-    return data
+# Convert the date column to datetime format
+data['Date'] = pd.to_datetime(data['Date'])
 
-# Function to generate buy/sell signals based on moving average crossover
-def generate_signals(data):
-    signals = []
-    position = 0
-    
-    for i in range(1, len(data)):
-        if data['Short_MA'].iloc[i] > data['Long_MA'].iloc[i] and data['Short_MA'].iloc[i - 1] <= data['Long_MA'].iloc[i - 1]:
-            signals.append(1)  # Buy signal
-            position = 1
-        elif data['Short_MA'].iloc[i] < data['Long_MA'].iloc[i] and data['Short_MA'].iloc[i - 1] >= data['Long_MA'].iloc[i - 1]:
-            signals.append(-1)  # Sell signal
-            position = 0
-        else:
-            signals.append(0)  # No signal
-    
-    return signals
+# Set the date column as the index
+data.set_index('Date', inplace=True)
 
-# Main function for live trading
-def live_trading(symbol):
-    # Fetch live data
-    live_data = fetch_live_data(symbol)
-    
-    # Calculate moving averages
-    live_data = calculate_moving_averages(live_data, 50, 200)
-    
-    # Generate buy/sell signals
-    signals = generate_signals(live_data)
-    
-    # Print signals
-    print(signals)  # Replace this with actual trading logic
+# Resample the data to 5-minute intervals (adjust as per your requirement)
+data_5min = data.resample('5T').agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'})
 
-# Example usage
-if __name__ == "__main__":
-    symbol = 'AAPL'  # Example stock symbol
-    live_trading(symbol)
+# Calculate technical indicators (you can use various indicators based on your strategy)
+data_5min['SMA_50'] = talib.SMA(data_5min['Close'], timeperiod=50)
+data_5min['SMA_200'] = talib.SMA(data_5min['Close'], timeperiod=200)
+data_5min['RSI'] = talib.RSI(data_5min['Close'], timeperiod=14)
+
+# Define your trading strategy
+data_5min['Signal'] = np.where((data_5min['SMA_50'] > data_5min['SMA_200']) & (data_5min['RSI'] < 30), 1, 0)
+
+# Backtest the strategy
+data_5min['Returns'] = data_5min['Close'].pct_change()
+data_5min['Strategy_Returns'] = data_5min['Signal'].shift(1) * data_5min['Returns']
+
+# Calculate cumulative returns
+data_5min['Cumulative_Returns'] = (1 + data_5min['Strategy_Returns']).cumprod()
+
+# Plot cumulative returns
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10, 6))
+plt.plot(data_5min['Cumulative_Returns'], label='Strategy Returns')
+plt.xlabel('Date')
+plt.ylabel('Cumulative Returns')
+plt.title('Intraday Trading Strategy Returns')
+plt.legend()
+plt.grid(True)
+plt.show()
