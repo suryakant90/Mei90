@@ -3,4 +3,4 @@ zapline
 pandas 
 numpy
 datetime
-
+talib
